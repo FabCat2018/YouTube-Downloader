@@ -19,9 +19,15 @@ class Downloader:
     def _get_all_playlists(self, url):
         webdriver = WebDriver()
         webpage = webdriver.get_webpage(url)
-        playlists = webdriver.get_all_matching_elements(
+        raw_playlists = webdriver.get_all_matching_elements(
             webpage, "ytd-grid-playlist-renderer.ytd-grid-renderer")
-        print(playlists)
+
+        playlists = list(map(lambda playlist: Playlist(webdriver.get_element_attribute(
+            playlist, "#video-title", "href")), raw_playlists))
+
+        for playlist in playlists:
+            print(playlist.title)
+        return playlists
 
     def _get_stream(self, link):
         youtube_object = YouTube(link)

@@ -1,5 +1,3 @@
-from hashlib import new
-
 from parsel import Selector
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -37,26 +35,18 @@ class WebDriver:
         _ = WebDriverWait(driver=driver, timeout=10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, ".ytd-page-manager")))
 
-        # Scroll to page bottom
-        last_height = driver.execute_script(
-            "return document.body.scrollHeight")
-        while True:
-            driver.execute_script(
-                "window.scrollTo(0, document.body.scrollHeight)")
-            WebDriverWait(driver=driver, timeout=3)
-
-            new_height = driver.execute_script(
-                "return document.body.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
+        # Zoom out page to show all playlists at once
+        driver.execute_script(
+            "document.body.style.transform='scale(0.1, 0.1)'")
+        _ = WebDriverWait(driver=driver, timeout=10).until(lambda browser: len(
+            browser.find_elements(By.CSS_SELECTOR, ".ytd-grid-renderer")) >= int(104))
 
         # Return the page contents
         return driver.page_source
 
     def get_all_matching_elements(self, page_source, css):
         """
-            Gets a list of elements from 'soup' which match 'tag' and 'attrs'
+            Gets a list of elements as strings from 'page_source' which match 'css' selector
 
             Args:
                 page_source: The string representing the page
@@ -64,3 +54,15 @@ class WebDriver:
         """
 
         return Selector(text=page_source).css(css).getall()
+
+    def get_element_attribute(self, text, css, attr):
+        """
+            Gets the string value of 'attr' for the element uniquely identified by 'css' inside 'text'
+
+            Args:
+                text: The string representing the element
+                css: The css used to identify the element, string
+                attr: The attribute found within the element, string
+        """
+
+        return Selector(text=text).css(css).attrib[attr]
